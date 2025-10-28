@@ -135,6 +135,77 @@ def clean_sp500_data(file_path):
     
     return df
 
+def clean_forbes_stock_data(file_path):
+    """
+    Clean Forbes 2000 stock market CSV files
+    """
+    print(f"\nCleaning: {os.path.basename(file_path)}")
+    
+    # Read the CSV file
+    df = pd.read_csv(file_path)
+    
+    initial_rows = len(df)
+    print(f"  Initial rows: {initial_rows}")
+    
+    # 1. Remove duplicate rows
+    df = df.drop_duplicates()
+    duplicates_removed = initial_rows - len(df)
+    if duplicates_removed > 0:
+        print(f"  After removing duplicates: {len(df)} rows")
+    
+    # 2. Convert Date column to datetime (handle DD-MM-YYYY format)
+    df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+    
+    # 3. Remove rows with invalid dates
+    before_date_clean = len(df)
+    df = df.dropna(subset=['Date'])
+    if before_date_clean != len(df):
+        print(f"  Removed {before_date_clean - len(df)} rows with invalid dates")
+    
+    # 4. Sort by Date
+    df = df.sort_values('Date').reset_index(drop=True)
+    
+    # 5. Handle missing values in numeric columns
+    numeric_columns = ['Open', 'High', 'Low', 'Close', 'Adjusted Close', 'Volume']
+    for col in numeric_columns:
+        if col in df.columns:
+            # Convert to numeric, coercing errors
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    # 6. Remove rows where all price columns are NaN
+    before_numeric_clean = len(df)
+    df = df.dropna(subset=['Open', 'High', 'Low', 'Close'], how='all')
+    if before_numeric_clean != len(df):
+        print(f"  Removed {before_numeric_clean - len(df)} rows with all missing price data")
+    
+    # 7. Validate price data (High >= Low, Close between High and Low)
+    invalid_mask = (df['High'] < df['Low']) | \
+                   (df['Close'] > df['High']) | \
+                   (df['Close'] < df['Low']) | \
+                   (df['Open'] > df['High']) | \
+                   (df['Open'] < df['Low'])
+    
+    invalid_count = invalid_mask.sum()
+    if invalid_count > 0:
+        print(f"  Warning: Found {invalid_count} rows with invalid price relationships")
+        # Remove invalid rows
+        df = df[~invalid_mask]
+    
+    # 8. Fill missing Volume with 0 (common convention)
+    df['Volume'] = df['Volume'].fillna(0)
+    
+    # 9. Fill missing Adjusted Close with Close value
+    if 'Adjusted Close' in df.columns and 'Close' in df.columns:
+        df['Adjusted Close'] = df['Adjusted Close'].fillna(df['Close'])
+    
+    # 10. Format Date back to original format (DD-MM-YYYY)
+    df['Date'] = df['Date'].dt.strftime('%d-%m-%Y')
+    
+    if initial_rows - len(df) > 0:
+        print(f"  Final rows: {len(df)} (cleaned {initial_rows - len(df)} rows)")
+    
+    return df
+
 def main():
     """
     Main function to clean all CSV files in the Data directory
@@ -171,6 +242,29 @@ def main():
         except Exception as e:
             print(f"  ✗ Error cleaning {sp500_path}: {str(e)}")
     
+    # Clean Forbes 2000 stock market files
+    forbes_path = os.path.join(base_path, 'stock_market_data', 'forbes2000', 'csv')
+    if os.path.exists(forbes_path):
+        csv_files = glob.glob(os.path.join(forbes_path, '*.csv'))
+        print(f"\nFound {len(csv_files)} Forbes 2000 stock files")
+        
+        cleaned_count = 0
+        error_count = 0
+        
+        for csv_file in sorted(csv_files):
+            try:
+                cleaned_df = clean_forbes_stock_data(csv_file)
+                # Save the cleaned data (overwrite original)
+                cleaned_df.to_csv(csv_file, index=False)
+                cleaned_count += 1
+            except Exception as e:
+                print(f"  ✗ Error cleaning {os.path.basename(csv_file)}: {str(e)}")
+                error_count += 1
+        
+        print(f"\n  ✓ Successfully cleaned {cleaned_count} Forbes 2000 files")
+        if error_count > 0:
+            print(f"  ✗ Failed to clean {error_count} files")
+    
     print("\n" + "="*60)
     print("Data Cleaning Complete!")
     print("="*60)
@@ -181,8 +275,13 @@ def main():
     print("  • Cleaned numeric columns (removed commas, quotes)")
     print("  • Validated price data consistency (High >= Low, etc.)")
     print("  • Filled missing Volume values with 0")
+    print("  • Filled missing Adjusted Close with Close values")
     print("  • Sorted data appropriately")
     print("  • Removed rows with all missing price data")
+    print("\nDatasets cleaned:")
+    print("  • Global Stock Market (2008-2023) - 16 files")
+    print("  • SP 500 index data")
+    print("  • Forbes 2000 individual stock files")
 
 if __name__ == "__main__":
     main()

@@ -7,7 +7,10 @@
 
 ## Summary
 
-Successfully cleaned **17 CSV files** across the Data directory, removing invalid records and standardizing data formats.
+Successfully cleaned **103 CSV files** across the Data directory, removing invalid records and standardizing data formats:
+- Global Stock Market (2008-2023): 16 files
+- SP 500: 1 file
+- Forbes 2000 Individual Stocks: 86 files
 
 ---
 
