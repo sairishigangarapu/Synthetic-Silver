@@ -1,0 +1,85 @@
+.sidebar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Allow sidebar to scroll */
+  padding-right: 1rem;
+  max-width: 400px;
+  min-width: 350px;
+}
+
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #f1f5f9;
+}
+
+.ticker-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ticker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #334155;
+}
+.ticker-list li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.ticker-symbol-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ticker-symbol {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f1f5f9;
+}
+
+.ticker-name {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.ticker-price-change {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  min-width: 110px; /* Align prices */
+}
+
+.ticker-price {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f1f5f9;
+}
+
+/* Re-use change styles from MainDashboard.css */
+.change-positive {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #22c55e;
+}
+
+.change-negative {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ef4444;
+}
