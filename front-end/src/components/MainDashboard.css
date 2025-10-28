@@ -1,0 +1,91 @@
+/* Main Dashboard Styles */
+.main-dashboard {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  gap: 0.8rem; /* Reduced gap */
+}
+
+.dashboard-widget {
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1rem; /* Reduced padding */
+}
+
+.dashboard-widget h2 {
+  font-size: 1.1rem; /* Reduced font size */
+  font-weight: 600;
+  color: #f0f6fc;
+  margin-top: 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #30363d;
+}
+
+/* Market Overview List */
+.market-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.market-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+}
+
+/* Add separator line */
+.market-item:not(:last-child) {
+  border-bottom: 1px solid #21262d;
+}
+
+.market-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.market-item-info-name {
+  font-size: 0.9rem; /* Reduced font size */
+  font-weight: 500;
+  color: #f0f6fc;
+}
+
+.market-item-info-desc {
+  font-size: 0.7rem; /* Reduced font size */
+  color: #8b949e;
+}
+
+.market-item-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.market-item-price-val {
+  font-size: 0.9rem; /* Reduced font size */
+  font-weight: 500;
+  color: #f0f6fc;
+}
+
+.market-item-price-change {
+  font-size: 0.8rem; /* Reduced font size */
+  font-weight: 500;
+}
+
+.market-item-price-change.positive {
+  color: #3fb950;
+}
+
+.market-item-price-change.negative {
+  color: #f85149;
+}
+
+/* Chart Styles */
+.chart-container {
+  height: 300px; /* You can adjust this height */
+  position: relative;
+  padding: 1rem
+}
+

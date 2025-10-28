@@ -1,0 +1,32 @@
+/* Remove any old styles if they exist */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Allow page to grow beyond viewport height */
+  background-color: #0d1117; /* Dark background */
+}
+
+/* New 3-column grid layout */
+.app-body {
+  display: grid;
+  /* Col 1 (Portfolio), Col 2 (Main), Col 3 (Ticker) */
+  /* Switched to flexible units to prevent middle column from collapsing */
+  grid-template-columns: 1.2fr 2fr 1fr;
+  grid-template-columns: 0.8fr 1.2fr 0.8fr;
+  gap: 0.8rem; /* Reduced gap */
+  padding: 0.6rem; /* Reduced padding */
+  flex-grow: 1;
+  /* overflow: hidden; /* Removed to allow page scroll */
+}
+
+/* Ensure all 3 columns can scroll independently if their content is tall */
+.app-body > * {
+  /* overflow-y: auto; /* Removed */
+  /* height: calc( ... ); /* Removed */
+  /* Add min-width to prevent content from causing layout issues */
+  min-width: 0;
+}
+
+/* Simple scrollbar styling for a cleaner look */
+/* Removed scrollbar styling */
+

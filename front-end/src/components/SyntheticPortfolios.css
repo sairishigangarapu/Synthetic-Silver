@@ -1,0 +1,64 @@
+/* Synthetic Portfolios Styles */
+.portfolios {
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 0.8rem; /* Reduced padding */
+  color: #c9d1d9;
+  overflow-y: auto;
+}
+
+.portfolios-title {
+  font-size: 1.1rem; /* Reduced font size */
+  font-weight: 600;
+  color: #f0f6fc;
+  margin-top: 0;
+  margin-bottom: 0.8rem; /* Reduced margin */
+}
+
+.portfolios-desc {
+  font-size: 0.8rem; /* Reduced font size */
+  color: #8b949e;
+  line-height: 1.5;
+  margin-bottom: 1rem; /* Reduced margin */
+}
+
+.portfolio-card {
+  background-color: #0d1117;
+  border: 1px solid #30363d;
+  padding: 0.8rem;
+  border-radius: 6px;
+  margin-bottom: 1rem; /* Reduced margin */
+}
+
+.portfolio-card h3 {
+  font-size: 1rem; /* Reduced font size */
+  color: #58a6ff;
+  margin-top: 0;
+  margin-bottom: 0.4rem; /* Reduced margin */
+}
+
+.portfolio-card p {
+  font-size: 0.8rem; /* Reduced font size */
+  color: #c9d1d9;
+  margin-top: 0;
+  margin-bottom: 0.8rem; /* Reduced margin */
+  line-height: 1.4;
+}
+
+.portfolio-card button {
+  background-color: #238636;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem; /* Reduced padding */
+  font-size: 0.85rem; /* Reduced font size */
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.portfolio-card button:hover {
+  background-color: #2ea043;
+}
+
