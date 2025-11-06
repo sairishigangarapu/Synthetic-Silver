@@ -61,4 +61,168 @@
 .portfolio-card button:hover {
   background-color: #2ea043;
 }
+ /* --- NEW: Portfolio Weights List --- */
+.portfolio-weights {
+  font-size: 0.8rem;
+  color: #c9d1d9;
+  margin-bottom: 0.8rem;
+}
+.portfolio-weights strong {
+  font-weight: 600;
+  color: #f0f6fc;
+}
+.portfolio-weights ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0.4rem;
+}
+.portfolio-weights li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+}
+.asset-name {
+  color: #8b949e;
+}
+.asset-weight {
+  font-weight: 500;
+  color: #f0f6fc;
+}
+/* --- End of New Weights List --- */
 
+
+.portfolio-card button {
+  background-color: #238636;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem; /* Reduced padding */
+  font-size: 0.85rem; /* Reduced font size */
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.portfolio-card button:hover {
+  background-color: #2ea043;
+}
+
+/* --- NEW: Modal Styles --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(13, 17, 23, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: #8b949e;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.modal-close-btn:hover {
+  color: #f0f6fc;
+}
+
+.modal-title {
+  font-size: 1.3rem;
+  color: #58a6ff;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.modal-desc {
+  font-size: 0.9rem;
+  color: #c9d1d9;
+  margin-bottom: 1rem;
+}
+
+/* Style for weights list inside the modal */
+.modal-weights ul {
+  margin-top: 0.5rem;
+}
+.modal-weights li {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #21262d;
+}
+.modal-weights li:last-child {
+  border-bottom: none;
+}
+
+.portfolio-details {
+  font-size: 0.9rem;
+}
+.portfolio-details strong {
+  font-weight: 600;
+  color: #f0f6fc;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.portfolio-details p {
+  color: #c9d1d9;
+  line-height: 1.5;
+  margin-top: 0;
+}
+
+/* --- NEW: Performance Metrics --- */
+.performance-metrics {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #0d1117;
+  padding: 0.8rem;
+  border-radius: 6px;
+  flex-grow: 1;
+  border: 1px solid #21262d;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #8b949e;
+  margin-bottom: 0.3rem;
+  white-space: nowrap;
+}
+
+.metric-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f0f6fc;
+}
+/* --- End of New Metrics --- */
+
+
+/* Chart Styles */
+.chart-container {
+  height: 300px; /* You can adjust this height */
+  position: relative;
+}

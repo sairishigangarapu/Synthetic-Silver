@@ -71,57 +71,81 @@ const chartOptions = {
 };
 
 export default function MainDashboard() {
-  // --- Live Chart State ---
-  // Put the chart data into state
-  const [chartData, setChartData] = useState(initialChartData);
+  const [chartData, setChartData] = useState(null); // Start as null
+  const [performanceMetrics, setPerformanceMetrics] = useState(null); // NEW: State for metrics
+  const [silverData, setSilverData] = useState({ price: 29.50, change: -0.32, changePercent: -1.07 }); // Keep static for now
+  const [isLoading, setIsLoading] = useState(true);
 
-  // --- useEffect for Live Updates ---
+  // --- FETCHING FROM YOUR PYTHON (Flask) SERVER ---
   useEffect(() => {
-    // Set up an interval to simulate live data
-    const interval = setInterval(() => {
-      // Use the functional update form of setState to avoid stale state
-      setChartData((prevChartData) => {
-        // Get the current data and labels from the *previous state*
-        const oldLabels = prevChartData.labels;
-        const oldDataPoints = prevChartData.datasets[0].data;
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+        
+        // Fetch both chart data and metrics in parallel
+        const [chartResponse, metricsResponse] = await Promise.all([
+          fetch("http://127.0.0.1:5000/api/live_chart"),
+          fetch("http://127.0.0.1:5000/api/performance_metrics") // NEW fetch
+        ]);
 
-        // Create a new label (e.g., current time)
-        const newLabel = new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
+        if (!chartResponse.ok || !metricsResponse.ok) {
+          throw new Error("Network response was not ok");
+        }
 
-        // Create a new data point (simulated)
-        // Ensure lastPrice is parsed as a float since it might be a string
-        const lastPrice = parseFloat(oldDataPoints[oldDataPoints.length - 1]);
-        const randomChange = (Math.random() - 0.48) * 0.5; // Small random change
-        const newPrice = Math.max(20, lastPrice + randomChange); // Ensure price stays positive
+        const chartData = await chartResponse.json();
+        const metricsData = await metricsResponse.json(); // NEW data
 
-        // Create new arrays, keeping the last 7 points
-        const newLabels = [...oldLabels.slice(1), newLabel];
-        const newDataPoints = [
-          ...oldDataPoints.slice(1),
-          newPrice,
-        ];
+        // --- Set Chart Data ---
+        setChartData(chartData);
+        
+        // --- Update Silver Price in Market Overview ---
+        // Get the last price from the "Actual Silver NAV" dataset (index 1)
+        if (chartData.datasets[1] && chartData.datasets[1].data.length > 0) {
+          const priceData = chartData.datasets[1].data;
+          const lastActualPrice = priceData[priceData.length - 1];
+          const prevActualPrice = priceData.length > 1 ? priceData[priceData.length - 2] : lastActualPrice;
+          
+          const change = lastActualPrice - prevActualPrice;
+          const changePercent = prevActualPrice === 0 ? 0 : (change / prevActualPrice) * 100;
 
-        // Return the new state object
-        return {
-          labels: newLabels,
-          datasets: [
-            {
-              ...prevChartData.datasets[0], // Keep old styling
-              data: newDataPoints,
-            },
-          ],
-        };
-      });
-    }, 2000); // Update every 2 seconds
+          setSilverData({ 
+            price: lastActualPrice,
+            change: change,
+            changePercent: changePercent
+          });
+        }
+        
+        // --- NEW: Set Performance Metrics ---
+        setPerformanceMetrics(metricsData);
 
-    // Cleanup function to stop the interval when the component unmounts
-    return () => clearInterval(interval);
-  }, []); // Use an empty dependency array so the effect runs only once
-  // --- End of Live Chart Logic ---
+      } catch (error) {
+        console.error("Error fetching data from Flask:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+    
+  }, []); // Runs once on component mount
+
+   // Helper function to render the overview
+  const renderMarketOverview = () => {
+    const isPositive = silverData.change >= 0;
+    const changeClass = isPositive ? "positive" : "negative";
+
+    return (
+      <div className="market-item-price">
+        <span className="market-item-price-val">
+          {silverData.price.toFixed(2)}
+        </span>
+        {/* --- FIXED: Combined into one JSX expression --- */}
+        <span className={`market-item-price-change ${changeClass}`}>
+          {`${isPositive ? "+" : ""}${silverData.change.toFixed(2)} (${silverData.changePercent.toFixed(2)}%)`}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div className="main-dashboard">
@@ -129,7 +153,7 @@ export default function MainDashboard() {
       <div className="dashboard-widget">
         <h2 className="dashboard-widget h2">Market Overview</h2>
 
-        {/* Improved layout for each market item */}
+        {/* S&P 500 (Static) */}
         <div className="market-item">
           <div className="market-item-info">
             <h3 className="market-item-info-name">S&P 500</h3>
@@ -143,6 +167,7 @@ export default function MainDashboard() {
           </div>
         </div>
 
+        {/* NASDAQ (Static) */}
         <div className="market-item">
           <div className="market-item-info">
             <h3 className="market-item-info-name">NASDAQ</h3>
@@ -156,29 +181,52 @@ export default function MainDashboard() {
           </div>
         </div>
 
+        {/* SILVER (XAG) - Now Dynamic */}
         <div className="market-item">
           <div className="market-item-info">
             <h3 className="market-item-info-name">SILVER (XAG)</h3>
             <span className="market-item-info-desc">Spot Price</span>
           </div>
-          <div className="market-item-price">
-            <span className="market-item-price-val">29.50</span>
-            <span className="market-item-price-change negative">
-              -0.32 (1.07%)
-            </span>
-          </div>
+          {/* Rendered by our new function */}
+          {isLoading ? <div>Loading...</div> : renderMarketOverview()}
         </div>
       </div>
 
-      {/* --- Price Chart Widget --- */}
+      {/* --- NEW: Performance Metrics Widget --- */}
       <div className="dashboard-widget">
-        <h2 className="dashboard-widget h2">Silver (XAG) Price Chart</h2>
+        <h2 className="dashboard-widget h2">Model Performance (Kalman Filter)</h2>
+        {isLoading || !performanceMetrics ? (
+          <div>Loading metrics...</div>
+        ) : (
+          <div className="performance-metrics">
+            <div className="metric-item">
+              <span className="metric-label">Tracking Error (TE)</span>
+              <span className="metric-value">{performanceMetrics.te.toFixed(6)}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">RMSE</span>
+              <span className="metric-value">{performanceMetrics.rmse.toFixed(6)}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">R-Squared (R²)</span>
+              <span className="metric-value">{performanceMetrics.r2.toFixed(4)}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* --- Price Chart Widget (Title Updated) --- */}
+      <div className="dashboard-widget">
+        <h2 className="dashboard-widget h2">Kalman Model vs. Actual Silver (NAV)</h2>
         <div className="chart-container">
-          {/* Render the Line chart with the live data from state */}
-          <Line data={chartData} options={chartOptions} />
+          {/* Show a loading message until the chart data is fetched */}
+          {isLoading || !chartData ? (
+            <div>Loading chart data from Python...</div>
+          ) : (
+            <Line data={chartData} options={chartOptions} />
+          )}
         </div>
       </div>
     </div>
   );
 }
-
