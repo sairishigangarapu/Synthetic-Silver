@@ -2,6 +2,7 @@ import os
 import math
 import numpy as np
 import pandas as pd
+import yfinance as yf  # <-- **ADD THIS IMPORT**
 from flask import Flask, jsonify
 from flask_cors import CORS
 from sklearn.metrics import r2_score, mean_squared_error
@@ -32,8 +33,22 @@ VAL_START, VAL_END = "2022-01-01", "2023-12-31"
 TEST_START, TEST_END = "2024-01-01", "2024-08-29"
 TARGET = "silver"
 
-# --- Helper Functions (from your notebook) ---
+# --- NEW: Yahoo Finance Ticker Mapping ---
+# Maps your asset names to their Yahoo Finance symbols
+TICKER_MAP = {
+    "silver": "SI=F",
+    "gold": "GC=F",
+    "copper": "HG=F",
+    "lead": "LRE",   # <-- Use LSE ticker
+    "nickel": "NIX.CN", # <-- Use LSE ticker
+    "zinc": "ZINC.L"    # <-- Use LSE ticker
+}
+# Get just the X_cols (assets in our basket, excluding silver)
+X_COLS_NAMES = [key for key in FILE_MAP.keys() if key != TARGET]
 
+
+# --- Helper Functions (from your notebook) ---
+# (read_price_series, to_log_returns, align_on_intersection, etc. remain the same)
 def read_price_series(path, date_col=DATE_COL, px_col=PRICE_COL, dayfirst=True):
     df = pd.read_csv(path)[[date_col, px_col]].copy()
     df[date_col] = pd.to_datetime(df[date_col], dayfirst=dayfirst, errors="coerce")
@@ -94,8 +109,9 @@ def run_kalman(R, y, q, r, init_w=None):
     yhat = np.einsum("tn,tn->t", R, means.squeeze())
     return means.squeeze(), yhat
 
-# --- Model Functions (to be run once at startup) ---
 
+# --- Model Functions (to be run once at startup) ---
+# (load_data, train_qp_model, train_kalman_model remain the same as your file)
 def load_data():
     """
     Loads and processes all data from CSV files.
@@ -216,9 +232,8 @@ def train_kalman_model(R_full, y_full, times, test_mask_full, y_test_true):
     return chart_js_data, metrics # Return both
 
 # --- Main Server Logic ---
-
 def load_all_models():
-    global QP_WEIGHTS, KALMAN_CHART_DATA, KALMAN_METRICS # Add KALMAN_METRICS
+    global QP_WEIGHTS, KALMAN_CHART_DATA, KALMAN_METRICS
     
     data = load_data()
     if data is None:
@@ -226,7 +241,7 @@ def load_all_models():
         # Fallback to mock data if CSVs are missing
         QP_WEIGHTS = {"gold": 0.90, "copper": 0.10}
         KALMAN_CHART_DATA = {"labels": ["T-1"], "datasets": [{"label": "Error", "data": [0]}]}
-        KALMAN_METRICS = {"te": 0, "rmse": 0, "r2": 0} # Add mock metrics
+        KALMAN_METRICS = {"te": 0, "rmse": 0, "r2": 0}
         return
         
     X_trainval, y_trainval, X_cols, R_full, y_full, times, test_mask_full, y_test_true = data
@@ -239,7 +254,6 @@ def load_all_models():
 
     # --- 3. Train Kalman Model ---
     print("Training Kalman Filter model...")
-    # Capture both return values
     KALMAN_CHART_DATA, KALMAN_METRICS = train_kalman_model(R_full, y_full, times, test_mask_full, y_test_true)
     print("Kalman chart data calculated.")
     print(f"Kalman metrics calculated: {KALMAN_METRICS}")
@@ -255,31 +269,60 @@ def home():
 
 @app.route("/api/static_weights")
 def api_static_weights():
-    """
-    Returns the pre-calculated static QP model weights.
-    """
     if QP_WEIGHTS is None:
         return jsonify({"error": "Model is not loaded."}), 500
     return jsonify(QP_WEIGHTS)
 
 @app.route("/api/live_chart")
 def api_live_chart():
-    """
-    Returns the pre-calculated Kalman Filter NAV data for the chart.
-    """
     if KALMAN_CHART_DATA is None:
         return jsonify({"error": "Model is not loaded."}), 500
     return jsonify(KALMAN_CHART_DATA)
 
-# --- NEW: Performance Metrics Endpoint ---
 @app.route("/api/performance_metrics")
 def api_performance_metrics():
-    """
-    Returns the pre-calculated Kalman Filter performance metrics.
-    """
     if KALMAN_METRICS is None:
         return jsonify({"error": "Metrics not loaded."}), 500
     return jsonify(KALMAN_METRICS)
+
+# --- **NEW**: Live Commodity Prices Endpoint (Yahoo Finance) ---
+@app.route("/api/commodity_prices")
+def api_commodity_prices():
+    """
+    Fetches the latest prices for the basket commodities from Yahoo Finance.
+    """
+    try:
+        # Get the asset names from your FILE_MAP, excluding silver
+        assets_to_fetch = [name for name in FILE_MAP.keys() if name != TARGET]
+        # Get the corresponding Yahoo Finance tickers
+        symbols = [TICKER_MAP[name] for name in assets_to_fetch]
+        
+        # Download data for the last 2 days to get the most recent valid price
+        data = yf.download(symbols, period="2d", interval="1d")
+        
+        if data.empty:
+            return jsonify({"error": "No data returned from yfinance"}), 500
+            
+        # Get the latest closing price for each
+        latest_prices = data['Close'].iloc[-1]
+        
+        response_data = []
+        for asset_name in assets_to_fetch:
+            symbol = TICKER_MAP[asset_name]
+            price = latest_prices.get(symbol)
+            response_data.append({
+                "symbol": symbol,
+                "name": asset_name.capitalize(),
+                # Handle cases where yfinance returns NaN (e.g., market closed)
+                "price": price if price and not np.isnan(price) else 0.0
+            })
+            
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"Error fetching from yfinance: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 # --- Run the Server ---
 if __name__ == "__main__":

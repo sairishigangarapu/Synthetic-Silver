@@ -73,12 +73,13 @@ const chartOptions = {
 export default function MainDashboard() {
   const [chartData, setChartData] = useState(null); // Start as null
   const [performanceMetrics, setPerformanceMetrics] = useState(null); // NEW: State for metrics
-  const [silverData, setSilverData] = useState({ price: 29.50, change: -0.32, changePercent: -1.07 }); // Keep static for now
+  const [commodityPrices, setCommodityPrices] = useState([]); // NEW: State for basket prices
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPrices, setIsLoadingPrices] = useState(true); // NEW: Separate loading for prices
 
   // --- FETCHING FROM YOUR PYTHON (Flask) SERVER ---
   useEffect(() => {
-    async function fetchData() {
+    async function fetchCoreData() {
       try {
         setIsLoading(true);
         
@@ -97,24 +98,7 @@ export default function MainDashboard() {
 
         // --- Set Chart Data ---
         setChartData(chartData);
-        
-        // --- Update Silver Price in Market Overview ---
-        // Get the last price from the "Actual Silver NAV" dataset (index 1)
-        if (chartData.datasets[1] && chartData.datasets[1].data.length > 0) {
-          const priceData = chartData.datasets[1].data;
-          const lastActualPrice = priceData[priceData.length - 1];
-          const prevActualPrice = priceData.length > 1 ? priceData[priceData.length - 2] : lastActualPrice;
-          
-          const change = lastActualPrice - prevActualPrice;
-          const changePercent = prevActualPrice === 0 ? 0 : (change / prevActualPrice) * 100;
-
-          setSilverData({ 
-            price: lastActualPrice,
-            change: change,
-            changePercent: changePercent
-          });
-        }
-        
+    
         // --- NEW: Set Performance Metrics ---
         setPerformanceMetrics(metricsData);
 
@@ -125,9 +109,33 @@ export default function MainDashboard() {
       }
     }
 
-    fetchData();
+    async function fetchCommodityPrices() {
+      // Fetch live prices separately
+      try {
+        setIsLoadingPrices(true);
+        const pricesResponse = await fetch("http://127.0.0.1:5000/api/commodity_prices");
+        if (!pricesResponse.ok) {
+          throw new Error("Network response for prices was not ok");
+        }
+        const pricesData = await pricesResponse.json();
+        setCommodityPrices(pricesData);
+      } catch (error) {
+        console.error("Error fetching commodity prices from Flask:", error);
+      } finally {
+        setIsLoadingPrices(false);
+      }
+    }
+
+    fetchCoreData();
+    fetchCommodityPrices();
     
-  }, []); // Runs once on component mount
+    // Optional: Set an interval to re-fetch prices every minute
+    const priceInterval = setInterval(fetchCommodityPrices, 60000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(priceInterval);
+    
+  }, []);// Runs once on component mount
 
    // Helper function to render the overview
   const renderMarketOverview = () => {
@@ -151,44 +159,26 @@ export default function MainDashboard() {
     <div className="main-dashboard">
       {/* --- Market Overview Widget --- */}
       <div className="dashboard-widget">
-        <h2 className="dashboard-widget h2">Market Overview</h2>
-
-        {/* S&P 500 (Static) */}
-        <div className="market-item">
-          <div className="market-item-info">
-            <h3 className="market-item-info-name">S&P 500</h3>
-            <span className="market-item-info-desc">US Market Index</span>
-          </div>
-          <div className="market-item-price">
-            <span className="market-item-price-val">5,420.10</span>
-            <span className="market-item-price-change positive">
-              +25.60 (0.47%)
-            </span>
-          </div>
-        </div>
-
-        {/* NASDAQ (Static) */}
-        <div className="market-item">
-          <div className="market-item-info">
-            <h3 className="market-item-info-name">NASDAQ</h3>
-            <span className="market-item-info-desc">Tech Market Index</span>
-          </div>
-          <div className="market-item-price">
-            <span className="market-item-price-val">18,105.70</span>
-            <span className="market-item-price-change positive">
-              +110.20 (0.61%)
-            </span>
-          </div>
-        </div>
-
-        {/* SILVER (XAG) - Now Dynamic */}
-        <div className="market-item">
-          <div className="market-item-info">
-            <h3 className="market-item-info-name">SILVER (XAG)</h3>
-            <span className="market-item-info-desc">Spot Price</span>
-          </div>
-          {/* Rendered by our new function */}
-          {isLoading ? <div>Loading...</div> : renderMarketOverview()}
+        <h2 className="dashboard-widget h2">Basket Commodities (Live Prices)</h2>
+        <div className="market-list">
+          {isLoadingPrices ? (
+            <div>Loading prices...</div>
+          ) : (
+            commodityPrices.map((item) => (
+              <div className="market-item" key={item.symbol}>
+                <div className="market-item-info">
+                  <h3 className="market-item-info-name">{item.name}</h3>
+                  <span className="market-item-info-desc">{item.name}</span>
+                </div>
+                <div className="market-item-price">
+                  <span className="market-item-price-val">
+                    ${item.price.toFixed(2)}
+                  </span>
+                  {/* yfinance doesn't easily provide % change for this, so we hide it */}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
