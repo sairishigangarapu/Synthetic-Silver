@@ -1,16 +1,21 @@
 .sidebar {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Allow sidebar to scroll */
-  padding-right: 1rem;
-  max-width: 400px;
-  min-width: 350px;
+  overflow-y: auto;
+}
+
+.card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 .sidebar-title {
   font-size: 1.25rem;
   font-weight: 600;
+  margin-top: 0;
   margin-bottom: 1rem;
   color: #f1f5f9;
 }
@@ -31,6 +36,7 @@
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #334155;
 }
+
 .ticker-list li:last-child {
   border-bottom: none;
   padding-bottom: 0;
@@ -51,10 +57,6 @@
 .ticker-name {
   font-size: 0.8rem;
   color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 120px;
 }
 
 .ticker-price-change {
@@ -62,7 +64,6 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 0.25rem;
-  min-width: 110px; /* Align prices */
 }
 
 .ticker-price {
@@ -71,7 +72,6 @@
   color: #f1f5f9;
 }
 
-/* Re-use change styles from MainDashboard.css */
 .change-positive {
   font-size: 0.9rem;
   font-weight: 500;

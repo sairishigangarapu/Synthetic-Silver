@@ -12,7 +12,7 @@ const initialTickerData = [
   { symbol: "USO", name: "Oil Fund", price: 78.90, change: -1.20, changePerc: -1.50 },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isCollapsed, onToggle })  {
   const [tickerData, setTickerData] = useState(initialTickerData);
 
   // Simulate live price updates
@@ -39,46 +39,52 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <aside className="sidebar">
-      {/* Ticker List Card */}
-      <div className="card">
-        <h3 className="sidebar-title">Market Ticker</h3>
-        <ul className="ticker-list">
-          {tickerData.map((stock) => (
-            <li className="ticker-item" key={stock.symbol}>
-              <div className="ticker-symbol-name">
-                <span className="ticker-symbol">{stock.symbol}</span>
-                <span className="ticker-name">{stock.name}</span>
-              </div>
-              <div className="ticker-price-change">
-                <span className="ticker-price">${stock.price.toFixed(2)}</span>
-                <span className={stock.change >= 0 ? "change-positive" : "change-negative"}>
-                  {stock.change >= 0 ? "+" : ""}
-                  {stock.change.toFixed(2)} ({stock.changePerc.toFixed(2)}%)
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div className={`panel-container ${isCollapsed ? 'collapsed' : ''}`}>
+      <button className={isCollapsed ? "collapse-btn right-collapsed" : "collapse-btn right"} onClick={onToggle}>
+        {isCollapsed ? '←' : '→'}
+      </button>
       
-      {/* Another sidebar module, e.g., Top Movers */}
-      <div className="card">
-        <h3 className="sidebar-title">Top Movers</h3>
-        <ul className="ticker-list">
-          {/* Static mock data for this one */}
-           <li className="ticker-item">
-              <span className="ticker-symbol">PPLT</span>
-              <span className="ticker-price">$89.10</span>
-              <span className="change-positive">+1.19%</span>
-           </li>
-           <li className="ticker-item">
-              <span className="ticker-symbol">USO</span>
-              <span className="ticker-price">$78.90</span>
-              <span className="change-negative">-1.50%</span>
-           </li>
-        </ul>
-      </div>
-    </aside>
+      <aside className="sidebar">
+        {/* Ticker List Card */}
+        <div className="card">
+          <h3 className="sidebar-title">Market Ticker</h3>
+          <ul className="ticker-list">
+            {tickerData.map((stock) => (
+              <li className="ticker-item" key={stock.symbol}>
+                <div className="ticker-symbol-name">
+                  <span className="ticker-symbol">{stock.symbol}</span>
+                  <span className="ticker-name">{stock.name}</span>
+                </div>
+                <div className="ticker-price-change">
+                  <span className="ticker-price">${stock.price.toFixed(2)}</span>
+                  <span className={stock.change >= 0 ? "change-positive" : "change-negative"}>
+                    {stock.change >= 0 ? "+" : ""}
+                    {stock.change.toFixed(2)} ({stock.changePerc.toFixed(2)}%)
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        {/* Another sidebar module, e.g., Top Movers */}
+        <div className="card">
+          <h3 className="sidebar-title">Top Movers</h3>
+          <ul className="ticker-list">
+            {/* Static mock data for this one */}
+            <li className="ticker-item">
+                <span className="ticker-symbol">PPLT</span>
+                <span className="ticker-price">$89.10</span>
+                <span className="change-positive">+1.19%</span>
+            </li>
+            <li className="ticker-item">
+                <span className="ticker-symbol">USO</span>
+                <span className="ticker-price">$78.90</span>
+                <span className="change-negative">-1.50%</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
   );
 }

@@ -7,7 +7,6 @@
   color: #c9d1d9;
   overflow-y: auto;
 }
-
 .portfolios-title {
   font-size: 1.1rem; /* Reduced font size */
   font-weight: 600;
@@ -46,21 +45,6 @@
   line-height: 1.4;
 }
 
-.portfolio-card button {
-  background-color: #238636;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem; /* Reduced padding */
-  font-size: 0.85rem; /* Reduced font size */
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.portfolio-card button:hover {
-  background-color: #2ea043;
-}
  /* --- NEW: Portfolio Weights List --- */
 .portfolio-weights {
   font-size: 0.8rem;
@@ -220,8 +204,62 @@
 }
 /* --- End of New Metrics --- */
 
+/* --- ADD THESE TO THE END OF SyntheticPortfolios.css --- */
+
+.live-price-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Space between items */
+}
+
+.live-price-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Space between items */
+
+  /* --- ADD THESE TWO LINES --- */
+  max-height: 150px; /* Adjust this value to your liking */
+  overflow-y: auto;
+  /* --- END OF NEW LINES --- */
+}
+
+.live-price-list li:last-child {
+  border-bottom: none; /* No line on the last item */
+  padding-bottom: 0;
+}
+.live-price-item{
+  display:flex;
+  justify-content: space-around;
+}
+.live-asset-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #c9d1d9;
+}
+
+.live-asset-price {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f0f6fc;
+}
 
 /* Chart Styles */
+.chart-placeholder {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0d1117;
+  border-radius: 6px;
+  color: #c9d1d9;
+}
 .chart-container {
   height: 300px; /* You can adjust this height */
   position: relative;
