@@ -28,12 +28,17 @@ CHART_FILE = os.path.join(basedir, 'silver_vs_basket_chart.csv')
 METRICS_FILE = os.path.join(basedir, 'silver_vs_basket_metrics.json')
 DYNAMIC_WEIGHTS_FILE = os.path.join(basedir, 'dynamic_portfolio_predictions_new.csv')
 STATIC_WEIGHTS_FILE = os.path.join(basedir, 'commodity_basket_weights.csv')
+ACTUAL_CHART_FILE = os.path.join(basedir, 'silver_vs_actual_chart.csv')
+ACTUAL_METRICS_FILE = os.path.join(basedir, 'silver_vs_actual_metrics.json')
 
 # --- Globals to store loaded data ---
 chart_data = None
 metrics_data = None
 dynamic_weights_data = None
 static_weights_data = None
+# --- ADD THESE TWO NEW GLOBALS ---
+actual_chart_data = None
+actual_metrics_data = None
 
 # --- Flask App Setup ---
 app = Flask(__name__)
@@ -44,7 +49,7 @@ def load_all_data():
     Loads all pre-calculated data from the notebook's
     output files *once* when the server starts.
     """
-    global chart_data, metrics_data, dynamic_weights_data, static_weights_data
+    global chart_data, metrics_data, dynamic_weights_data, static_weights_data, actual_chart_data, actual_metrics_data
     
     # 1. Load Chart Data
     try:
@@ -84,6 +89,23 @@ def load_all_data():
     except Exception as e:
         print(f"❌ ERROR loading static weights: {e}")
 
+    # 5. Load 'Actual' Chart Data
+    try:
+        df_chart_actual = pd.read_csv(ACTUAL_CHART_FILE)
+        df_chart_actual["Date"] = pd.to_datetime(df_chart_actual["Date"])
+        actual_chart_data = df_chart_actual.set_index("Date").sort_index()
+        print(f"✅ Successfully loaded 'Actual' chart data from {ACTUAL_CHART_FILE}")
+    except Exception as e:
+        print(f"❌ ERROR loading 'Actual' chart data: {e}")
+
+    # 6. Load 'Actual' Metrics
+    try:
+        with open(ACTUAL_METRICS_FILE, 'r') as f:
+            actual_metrics_data = json.load(f)
+        print(f"✅ Successfully loaded 'Actual' metrics from {ACTUAL_METRICS_FILE}")
+    except Exception as e:
+        print(f"❌ ERROR loading 'Actual' metrics data: {e}")
+
 # --- API Endpoints ---
 
 @app.route("/")
@@ -117,12 +139,15 @@ def api_silver_vs_basket_chart():
             {
                 "label": "Silver Predicted Price (NN)",
                 "data": sliced_data['Silver_Predicted'].values.tolist(),
-                "borderColor": "rgba(88, 166, 255, 1)", "backgroundColor": "rgba(88, 166, 255, 0.2)", "fill": True, "tension": 0.3
+                "borderColor": "rgba(88, 166, 255, 1)", 
+                "backgroundColor": "rgba(88, 166, 255, 0.2)", 
+                "fill": True, "tension": 0.3
             },
             {
                 "label": "Commodity Basket Price",
                 "data": sliced_data['Basket_Price'].values.tolist(),
-                "borderColor": "rgba(192, 192, 192, 1)", "fill": False, "tension": 0.3
+                "borderColor": "rgba(192, 192, 192, 1)", 
+                "fill": False, "tension": 0.3
             }
         ]
     }
@@ -182,6 +207,56 @@ def api_latest_prices():
     except Exception as e:
         print(f"Error in /api/latest_prices: {e}")
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/api/silver_vs_actual_chart")
+def api_silver_vs_actual_chart():
+    if actual_chart_data is None:
+        return jsonify({"error": "Actual chart data not loaded."}), 500
+
+    # Slicing logic
+    timeframe = request.args.get('timeframe', '6M')
+    data = actual_chart_data.copy()
+    end_date = data.index.max()
+
+    if timeframe == '1D': start_date = end_date - pd.DateOffset(days=1)
+    elif timeframe == '5D': start_date = end_date - pd.DateOffset(days=5)
+    elif timeframe == '1M': start_date = end_date - pd.DateOffset(months=1)
+    elif timeframe == '6M': start_date = end_date - pd.DateOffset(months=6)
+    elif timeframe == '1Y': start_date = end_date - pd.DateOffset(years=1)
+    elif timeframe == '5Y': start_date = end_date - pd.DateOffset(years=5)
+    else: start_date = data.index.min()
+
+    sliced_data = data.loc[start_date:end_date]
+
+    # Format for Chart.js
+    chart_js_data = {
+        "labels": sliced_data.index.strftime('%Y-%m-%d').tolist(),
+        "datasets": [
+            {
+                "label": "Silver Predicted Price (NN)",
+                "data": sliced_data['Silver_Predicted'].values.tolist(),
+                "borderColor": "rgba(88, 166, 255, 1)", 
+                "backgroundColor": "rgba(88, 166, 255, 0.2)",
+                "fill": True,
+                "tension": 0.3
+            },
+            {
+                "label": "Actual Silver Price",
+                "data": sliced_data['Silver_Actual'].values.tolist(),
+                "borderColor": "rgba(192, 192, 192, 1)",
+                "fill": False,
+                "tension": 0.3
+            }
+        ]
+    }
+    return jsonify(chart_js_data)
+
+@app.route("/api/silver_vs_actual_metrics")
+def api_silver_vs_actual_metrics():
+    if actual_metrics_data is None:
+        return jsonify({"error": "Actual metrics data not loaded."}), 500
+    return jsonify(actual_metrics_data)
+
 # --- Run the Server ---
 if __name__ == "__main__":
     load_all_data()

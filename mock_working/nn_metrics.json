@@ -1,1 +1,1 @@
-{"train_loss": 2.1066815853118896, "test_loss": 2.213279962539673, "mse_unconstrained": 0.0003856469596223035, "mse_constrained": 0.0003856469915605548, "violations_pct": 0.0}
+{"train_loss": 2.0973217487335205, "test_loss": 2.205538511276245, "mse_unconstrained": 0.00036830499202968216, "mse_constrained": 0.00036830501054129633, "violations_pct": 0.0}

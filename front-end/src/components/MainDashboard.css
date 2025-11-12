@@ -29,7 +29,41 @@
   margin-bottom: 1rem; /* Add space between header and chart */
 }
 
-/* Add these new rules to MainDashboard.css */
+/* --- Styles for New Chart Title Dropdown --- */
+/* (Uses original pre-palette colors) */
+
+.chart-title-dropdown {
+  /* --- Style it to look like the old H2 --- */
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f0f6fc; /* Original title color */
+  font-family: inherit; /* Use Poppins font */
+
+  /* --- Remove default <select> styling --- */
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+
+  margin-bottom: 1rem; /* Add space between header and chart */
+  cursor: pointer;
+}
+
+/* Add a subtle hover effect */
+.chart-title-dropdown:hover {
+  color: #58a6ff; /* Original logo/link color */
+}
+
+.chart-title-dropdown:focus {
+  outline: none; /* Remove focus ring */
+}
+
+/* Style the <option> elements */
+.chart-title-dropdown option {
+  font-weight: 500;
+  background-color: #161b22; /* Original card background */
+  color: #f0f6fc;          /* Original title text */
+}
 
 .timeframe-selector {
   display: flex;
@@ -63,6 +97,7 @@
   color: white;
   font-weight: 600;
 }
+
 
 /* Market Overview List */
 .market-list {

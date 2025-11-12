@@ -37,21 +37,21 @@ DYNAMIC NEURAL NETWORK PORTFOLIO OPTIMIZATION REPORT
   ✅ Portfolio always fully invested
 
 📊 TRAINING RESULTS
-  Training Loss: 2.106682
-  Testing Loss: 2.213280
-  MSE (Constrained): 0.000386
+  Training Loss: 2.097322
+  Testing Loss: 2.205539
+  MSE (Constrained): 0.000368
   Training Samples: 361
   Testing Samples: 91
 
 📈 AVERAGE WEIGHT ALLOCATION (Test Set)
-  SILVER         : 14.01%  (Range: 12.93% - 17.36%)
-  COPPER         : 13.83%  (Range: 12.83% - 16.23%)
-  LITHIUM        : 13.73%  (Range: 12.75% - 16.59%)
-  NATURAL_GAS    : 13.71%  (Range: 12.81% - 15.95%)
-  RARE_EARTH     : 13.61%  (Range: 12.68% - 16.01%)
-  WHEAT          : 12.75%  (Range: 5.67% - 17.67%)
-  CORN           : 11.17%  (Range: 2.27% - 15.79%)
-  SOYBEAN        :  7.19%  (Range: 0.00% - 12.45%)
+  COPPER         : 14.01%  (Range: 12.99% - 16.41%)
+  SILVER         : 13.97%  (Range: 12.91% - 16.73%)
+  NATURAL_GAS    : 13.91%  (Range: 12.81% - 16.65%)
+  LITHIUM        : 13.77%  (Range: 12.58% - 16.85%)
+  RARE_EARTH     : 13.69%  (Range: 12.58% - 16.71%)
+  WHEAT          : 12.77%  (Range: 5.77% - 16.87%)
+  CORN           :  9.37%  (Range: 0.90% - 12.20%)
+  SOYBEAN        :  8.52%  (Range: 0.12% - 13.00%)
 
 💡 INTERPRETATION
   • The neural network dynamically adjusts commodity weights based on:
@@ -75,5 +75,5 @@ DYNAMIC NEURAL NETWORK PORTFOLIO OPTIMIZATION REPORT
   • nn_weight_predictions.png - Prediction accuracy
   • nn_weight_distribution.png - Weight trends
 
-✅ REPORT GENERATED: 2025-11-12 08:44:27
+✅ REPORT GENERATED: 2025-11-12 12:02:50
 ═════════════════════════════════════════════════════════════════════════════
