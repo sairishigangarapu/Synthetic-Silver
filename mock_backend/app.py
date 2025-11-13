@@ -2,21 +2,35 @@ import os
 import math
 import numpy as np
 import pandas as pd
-import yfinance as yf  # <-- **ADD THIS IMPORT**
-from flask import Flask, jsonify
+import yfinance as yf  
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from sklearn.metrics import r2_score, mean_squared_error
 import cvxpy as cp
 from pykalman import KalmanFilter
+from datetime import datetime, timedelta
 
 # --- Flask App Setup ---
 app = Flask(__name__)
-CORS(app)  # Allow React frontend to call this server
+# --- EXPLICIT CORS FIX ---
+CORS(app)
+@app.after_request
+def after_request(response):
+    header = response.headers
+    header['Access-Control-Allow-Origin'] = 'http://localhost:5173' # Your React app's origin
+    header['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    header['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    return response
 
 # --- Globals to store results ---
 QP_WEIGHTS = None
-KALMAN_CHART_DATA = None
-KALMAN_METRICS = None  # NEW: Global for performance metrics
+# KALMAN_CHART_DATA = None # We no longer need this static global
+KALMAN_METRICS = None
+
+# --- NEW: Globals for DYNAMIC chart data ---
+GLOBAL_TIMES = None             # Full pandas DatetimeIndex
+GLOBAL_Y_TRUE_LOGRET = None     # Full np.array of true log returns
+GLOBAL_YHAT_KALMAN_LOGRET = None  # Full np.array of predicted log returns
 
 # --- File paths and Configs (from your notebook) ---
 FILE_MAP = {
@@ -44,11 +58,10 @@ TICKER_MAP = {
     "zinc": "ZINC.L"    # <-- Use LSE ticker
 }
 # Get just the X_cols (assets in our basket, excluding silver)
-X_COLS_NAMES = [key for key in FILE_MAP.keys() if key != TARGET]
-
+X_COLS_TICKERS = {k: v for k, v in TICKER_MAP.items() if k != 'silver'}
 
 # --- Helper Functions (from your notebook) ---
-# (read_price_series, to_log_returns, align_on_intersection, etc. remain the same)
+
 def read_price_series(path, date_col=DATE_COL, px_col=PRICE_COL, dayfirst=True):
     df = pd.read_csv(path)[[date_col, px_col]].copy()
     df[date_col] = pd.to_datetime(df[date_col], dayfirst=dayfirst, errors="coerce")
@@ -111,7 +124,7 @@ def run_kalman(R, y, q, r, init_w=None):
 
 
 # --- Model Functions (to be run once at startup) ---
-# (load_data, train_qp_model, train_kalman_model remain the same as your file)
+
 def load_data():
     """
     Loads and processes all data from CSV files.
@@ -186,50 +199,26 @@ def train_qp_model(X_trainval, y_trainval, X_cols):
 def train_kalman_model(R_full, y_full, times, test_mask_full, y_test_true):
     """
     Trains the Kalman Filter model from Cell 4.
-    Returns Chart.js formatted data AND performance metrics.
+    Returns performance metrics AND the FULL raw data series for slicing.
     """
     # Best params from your notebook
     best_params = {'te': 0.007867, 'q': 0.0001, 'r': 1e-05}
-    
+
+    # 1. Run the filter on the FULL dataset
     means_best, yhat_best = run_kalman(R_full, y_full, q=best_params["q"], r=best_params["r"])
-    
-    # Get the test predictions
+
+    # 2. Get the test predictions *only* for calculating metrics
     yhat_test_kf  = pd.Series(yhat_best[test_mask_full], index=times[test_mask_full])
     y_test_kf     = pd.Series(y_test_true, index=times[test_mask_full])
 
-    # Convert log returns to NAV for plotting
-    nav_pred = nav_from_logrets(yhat_test_kf)
-    nav_true = nav_from_logrets(y_test_kf)
-
-    # Format for Chart.js
-    chart_js_data = {
-        "labels": nav_pred.index.strftime('%Y-%m-%d').tolist(), # Dates for X-axis
-        "datasets": [
-            {
-                "label": "Synthetic NAV (Kalman)",
-                "data": nav_pred.values.tolist(),
-                "fill": True,
-                "backgroundColor": "rgba(88, 166, 255, 0.2)",
-                "borderColor": "rgba(88, 166, 255, 1)",
-                "tension": 0.3,
-            },
-            {
-                "label": "Actual Silver NAV",
-                "data": nav_true.values.tolist(),
-                "fill": False,
-                "borderColor": "rgba(192, 192, 192, 1)",
-                "tension": 0.3,
-            }
-        ]
-    }
-    
-    # --- NEW: Calculate Performance Metrics ---
+    # 3. Calculate Performance Metrics
     te = tracking_error(y_test_kf, yhat_test_kf)
     rmse = math.sqrt(mean_squared_error(y_test_kf, yhat_test_kf))
     r2 = r2_score(y_test_kf, yhat_test_kf)
     metrics = {"te": te, "rmse": rmse, "r2": r2}
 
-    return chart_js_data, metrics # Return both
+    # 4. Return the metrics and the FULL data series (not just the test split)
+    return metrics, times, y_full, yhat_best
 
 # --- Main Server Logic ---
 def load_all_models():
@@ -253,11 +242,14 @@ def load_all_models():
     print(f"QP Weights calculated: {QP_WEIGHTS}")
 
     # --- 3. Train Kalman Model ---
+    global GLOBAL_TIMES, GLOBAL_Y_TRUE_LOGRET, GLOBAL_YHAT_KALMAN_LOGRET
+
     print("Training Kalman Filter model...")
-    KALMAN_CHART_DATA, KALMAN_METRICS = train_kalman_model(R_full, y_full, times, test_mask_full, y_test_true)
-    print("Kalman chart data calculated.")
+    KALMAN_METRICS, GLOBAL_TIMES, GLOBAL_Y_TRUE_LOGRET, GLOBAL_YHAT_KALMAN_LOGRET = train_kalman_model(R_full, y_full, times, test_mask_full, y_test_true)
+
     print(f"Kalman metrics calculated: {KALMAN_METRICS}")
-    
+    print("Kalman full data series are loaded into memory.")
+
     print("\n--- All models loaded. Server is ready. ---")
 
 
@@ -269,58 +261,130 @@ def home():
 
 @app.route("/api/static_weights")
 def api_static_weights():
+    """
+    Returns the pre-calculated static QP model weights.
+    """
     if QP_WEIGHTS is None:
         return jsonify({"error": "Model is not loaded."}), 500
     return jsonify(QP_WEIGHTS)
 
 @app.route("/api/live_chart")
 def api_live_chart():
-    if KALMAN_CHART_DATA is None:
-        return jsonify({"error": "Model is not loaded."}), 500
-    return jsonify(KALMAN_CHART_DATA)
+    """
+    Returns DYNAMICALLY sliced Kalman Filter NAV data for the chart
+    based on the 'timeframe' query parameter.
+    """
+    # 1. Get timeframe from query param, default to '1M'
+    timeframe = request.args.get('timeframe', '1M')
+
+    # 2. Check if models are loaded
+    if GLOBAL_TIMES is None or GLOBAL_Y_TRUE_LOGRET is None or GLOBAL_YHAT_KALMAN_LOGRET is None:
+        return jsonify({"error": "Model data is not loaded."}), 500
+
+    # 3. Re-create the full DataFrame from our global data
+    # We must use the full data, as the test period might be < 6M
+    all_data = pd.DataFrame({
+        'true_logret': GLOBAL_Y_TRUE_LOGRET,
+        'kalman_logret': GLOBAL_YHAT_KALMAN_LOGRET
+    }, index=GLOBAL_TIMES)
+
+    # 4. Get data just for the "test" period
+    # Your data is static, so '1M' means 'last 1M of the test data'
+    test_data = all_data.loc[all_data.index >= pd.to_datetime(TEST_START)].copy()
+    if test_data.empty:
+        return jsonify({"error": "No test data found for slicing."}), 404
+
+    # 5. Calculate start date based on the timeframe
+    end_date = test_data.index.max()
+    if timeframe == '1D':
+        start_date = end_date - pd.DateOffset(days=1)
+    elif timeframe == '5D':
+        start_date = end_date - pd.DateOffset(days=5)
+    elif timeframe == '1M':
+        start_date = end_date - pd.DateOffset(months=1)
+    elif timeframe == '6M':
+        start_date = end_date - pd.DateOffset(months=6)
+    else:
+        start_date = end_date - pd.DateOffset(months=1) # Default to '1M'
+
+    # 6. Slice the test data
+    sliced_data = test_data.loc[test_data.index >= start_date]
+    if sliced_data.empty or len(sliced_data) < 2:
+        return jsonify({"error": f"Not enough data for timeframe '{timeframe}'."}), 404
+
+    # 7. Convert sliced log returns to NAV
+    nav_true = nav_from_logrets(sliced_data['true_logret'])
+    nav_pred = nav_from_logrets(sliced_data['kalman_logret'])
+
+    # 8. Format for Chart.js
+    chart_js_data = {
+        "labels": nav_pred.index.strftime('%Y-%m-%d').tolist(),
+        "datasets": [
+            {
+                "label": "Synthetic NAV (Kalman)",
+                "data": nav_pred.values.tolist(),
+                "fill": True,
+                "backgroundColor": "rgba(88, 166, 255, 0.2)",
+                "borderColor": "rgba(88, 166, 255, 1)",
+                "tension": 0.3,
+            },
+            {
+                "label": "Actual Silver NAV",
+                "data": nav_true.values.tolist(),
+                "fill": False,
+                "borderColor": "rgba(192, 192, 192, 1)",
+                "tension": 0.3,
+            }
+        ]
+    }
+
+    return jsonify(chart_js_data)
 
 @app.route("/api/performance_metrics")
 def api_performance_metrics():
+    """
+    Returns the pre-calculated Kalman Filter performance metrics.
+    """
     if KALMAN_METRICS is None:
         return jsonify({"error": "Metrics not loaded."}), 500
     return jsonify(KALMAN_METRICS)
 
-# --- **NEW**: Live Commodity Prices Endpoint (Yahoo Finance) ---
+# --- NEW: Endpoint for Live Commodity Prices ---
 @app.route("/api/commodity_prices")
 def api_commodity_prices():
     """
-    Fetches the latest prices for the basket commodities from Yahoo Finance.
+    Fetches live prices for the basket assets from Yahoo Finance.
     """
     try:
-        # Get the asset names from your FILE_MAP, excluding silver
-        assets_to_fetch = [name for name in FILE_MAP.keys() if name != TARGET]
-        # Get the corresponding Yahoo Finance tickers
-        symbols = [TICKER_MAP[name] for name in assets_to_fetch]
-        
-        # Download data for the last 2 days to get the most recent valid price
+        symbols = list(X_COLS_TICKERS.values())
+        # Download 2 days of data to get the last *closed* price
         data = yf.download(symbols, period="2d", interval="1d")
         
-        if data.empty:
-            return jsonify({"error": "No data returned from yfinance"}), 500
-            
-        # Get the latest closing price for each
-        latest_prices = data['Close'].iloc[-1]
+        if data.empty or 'Close' not in data:
+            return jsonify({"error": "No data found from Yahoo Finance"}), 500
         
-        response_data = []
-        for asset_name in assets_to_fetch:
-            symbol = TICKER_MAP[asset_name]
-            price = latest_prices.get(symbol)
-            response_data.append({
+        # Get the latest 'Close' price for each symbol
+        latest_prices = data['Close'].iloc[-1].to_dict()
+        
+        # Format the data for the frontend
+        # Match symbol back to asset name
+        reverse_ticker_map = {v: k for k, v in X_COLS_TICKERS.items()}
+        
+        price_list = []
+        for symbol, price in latest_prices.items():
+            if pd.isna(price): # Handle symbols that might fail
+                continue
+            name = reverse_ticker_map.get(symbol, symbol)
+            price_list.append({
+                "name": name.capitalize(),
                 "symbol": symbol,
-                "name": asset_name.capitalize(),
-                # Handle cases where yfinance returns NaN (e.g., market closed)
-                "price": price if price and not np.isnan(price) else 0.0
+                "price": price
             })
-            
-        return jsonify(response_data)
+        
+        return jsonify(price_list)
         
     except Exception as e:
-        print(f"Error fetching from yfinance: {e}")
+        print(f"Error in /api/commodity_prices: {e}")
         return jsonify({"error": str(e)}), 500
 
 
