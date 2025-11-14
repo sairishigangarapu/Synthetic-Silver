@@ -1,0 +1,61 @@
+{
+  "model_name": "Dynamic Neural Network Portfolio Optimization",
+  "creation_date": "2025-11-14 20:19:54",
+  "version": "1.0",
+  "description": "Neural network model for dynamically optimizing commodity portfolio weights based on parametric measurements with 30% hard limit per commodity",
+  "architecture": {
+    "input_shape": [
+      64
+    ],
+    "input_features": "64 (8 commodities \u00d7 8 parametric measurements)",
+    "output_shape": [
+      8
+    ]
+  },
+  "training_config": {
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "loss_function": "categorical_crossentropy",
+    "metrics": [
+      "mae",
+      "mse"
+    ],
+    "batch_size": 16,
+    "epochs": 100,
+    "validation_split": 0.15,
+    "early_stopping_patience": 20
+  },
+  "constraints": {
+    "max_weight_per_commodity": 0.3,
+    "total_portfolio_weight": 1.0,
+    "constraint_enforcement": "Softmax output ensures weights sum to 1.0"
+  },
+  "commodities": [
+    "COPPER",
+    "CORN",
+    "LITHIUM",
+    "NATURAL_GAS",
+    "RARE_EARTH",
+    "SILVER",
+    "SOYBEAN",
+    "WHEAT"
+  ],
+  "parametric_features": [
+    "volatility",
+    "trend",
+    "momentum",
+    "mean_reversion",
+    "skewness",
+    "kurtosis",
+    "price_range",
+    "sharpe_ratio"
+  ],
+  "files_generated": [
+    "dynamic_portfolio_nn_model.h5",
+    "dynamic_portfolio_nn_model.keras",
+    "dynamic_portfolio_nn_model.tflite",
+    "dynamic_portfolio_nn_model_architecture.json",
+    "dynamic_portfolio_nn_model.weights.h5",
+    "dynamic_portfolio_nn_model_metadata.json"
+  ]
+}
