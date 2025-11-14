@@ -1,0 +1,79 @@
+
+═════════════════════════════════════════════════════════════════════════════
+DYNAMIC NEURAL NETWORK PORTFOLIO OPTIMIZATION REPORT
+═════════════════════════════════════════════════════════════════════════════
+
+📊 MODEL ARCHITECTURE
+  Input Features: 64 (8 commodities × 8 parametric measurements)
+  Output Weights: 8 commodities
+  Hidden Layers: 4 (256 → 128 → 64 → 32 neurons)
+  Activation: ReLU (hidden), Softmax (output)
+  Regularization: L2 + Dropout + Batch Normalization
+  Constraint: Softmax ensures weights sum to 1.0
+
+📈 COMMODITIES ANALYZED (excluding GOLD)
+  • COPPER
+  • CORN
+  • LITHIUM
+  • NATURAL_GAS
+  • RARE_EARTH
+  • SILVER
+  • SOYBEAN
+  • WHEAT
+
+🔧 PARAMETRIC MEASUREMENTS PER COMMODITY
+  1. Volatility: Standard deviation of log returns
+  2. Trend: Linear regression slope of prices
+  3. Momentum: Rate of change from start to end
+  4. Mean Reversion: Distance from 20-day moving average
+  5. Skewness: Tail risk in returns distribution
+  6. Kurtosis: Fat tail probability
+  7. Price Range: Normalized max-min spread
+  8. Sharpe Ratio: Risk-adjusted return metric
+
+🎯 CONSTRAINT: HARD 30% LIMIT PER COMMODITY
+  ✅ All predicted weights ≤ 30%
+  ✅ All weights sum to 1.0 (normalized)
+  ✅ Portfolio always fully invested
+
+📊 TRAINING RESULTS
+  Training Loss: 2.129839
+  Testing Loss: 2.263286
+  MSE (Constrained): 0.000739
+  Training Samples: 361
+  Testing Samples: 91
+
+📈 AVERAGE WEIGHT ALLOCATION (Test Set)
+  LITHIUM        : 14.60%  (Range: 13.01% - 17.91%)
+  SILVER         : 14.42%  (Range: 12.87% - 17.20%)
+  RARE_EARTH     : 14.18%  (Range: 12.63% - 17.47%)
+  NATURAL_GAS    : 14.15%  (Range: 12.73% - 17.04%)
+  COPPER         : 14.01%  (Range: 12.65% - 16.66%)
+  WHEAT          : 12.55%  (Range: 6.18% - 16.70%)
+  CORN           : 11.14%  (Range: 2.03% - 13.81%)
+  SOYBEAN        :  4.94%  (Range: 0.01% - 11.78%)
+
+💡 INTERPRETATION
+  • The neural network dynamically adjusts commodity weights based on:
+    - Real-time parametric measurements from future predictions
+    - Volatility, trend, momentum, and risk-adjusted returns
+    - Correlation with silver (from baseline analysis)
+
+  • The 30% hard limit ensures portfolio diversification
+  • No single commodity can dominate the portfolio
+  • Weights automatically rebalance as market conditions change
+
+🔄 DYNAMIC REBALANCING LOGIC
+  Weight_i = f(Volatility_i, Trend_i, Sharpe_i, Momentum_i)
+  Subject to: 0 ≤ Weight_i ≤ 0.30
+              Sum(Weight_i) = 1.0
+
+📁 OUTPUT FILES
+  • dynamic_portfolio_nn_model.h5 - Trained model
+  • dynamic_portfolio_predictions_20251112_083616.csv - Daily weight predictions
+  • nn_training_history.png - Loss/MAE curves
+  • nn_weight_predictions.png - Prediction accuracy
+  • nn_weight_distribution.png - Weight trends
+
+✅ REPORT GENERATED: 2025-11-12 08:36:16
+═════════════════════════════════════════════════════════════════════════════

@@ -71,31 +71,64 @@ const PortfolioCard = ({ title, description, weights, onViewDetails }) => (
   </div>
 );
 
-export default function SyntheticPortfolios() {
+export default function SyntheticPortfolios ({ isCollapsed, onToggle }) {
   const [staticWeights, setStaticWeights] = useState(null);
+  const [dynamicWeights, setDynamicWeights] = useState(null); // <-- ADDED THIS
+  const [livePrices, setLivePrices] = useState([]); // New state for prices
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPrices, setIsLoadingPrices] = useState(true); // New loading state
+  const [isLoadingDynamic, setIsLoadingDynamic] = useState(true); // <-- ADDED THIS
   
   // --- NEW State for the modal ---
   const [modalData, setModalData] = useState(null);
 
   useEffect(() => {
-    async function fetchStaticWeights() {
+    async function fetchAllWeights() {
       try {
         setIsLoading(true);
-        const response = await fetch("http://127.0.0.1:5000/api/static_weights");
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        setStaticWeights(data);
+        setIsLoadingDynamic(true);
+
+        const [staticResponse, dynamicResponse] = await Promise.all([
+          fetch("http://127.0.0.1:5000/api/static_weights"),
+          fetch("http://127.0.0.1:5000/api/dynamic_weights") // <-- UPDATED
+        ]);
+
+        if (!staticResponse.ok) throw new Error("Static weights network response was not ok");
+        if (!dynamicResponse.ok) throw new Error("Dynamic weights network response was not ok");
+
+        const staticData = await staticResponse.json();
+        const dynamicData = await dynamicResponse.json(); // <-- NEW
+
+        setStaticWeights(staticData);
+        setDynamicWeights(dynamicData); // <-- NEW
+
       } catch (error) {
-        console.error("Error fetching static weights from Flask:", error);
+        console.error("Error fetching portfolio weights from Flask:", error);
       } finally {
         setIsLoading(false);
+        setIsLoadingDynamic(false); // <-- NEW
       }
     }
-    fetchStaticWeights();
-  }, []);
+    // --- NEW Function to fetch prices ---
+    async function fetchLivePrices() {
+      try {
+        setIsLoadingPrices(true);
+        const response = await fetch("http://127.0.0.1:5000/api/latest_prices");
+        if (!response.ok) {
+          throw new Error("Live prices network response was not ok");
+        }
+        const data = await response.json();
+        setLivePrices(data);
+      } catch (error) {
+        console.error("Error fetching live prices:", error);
+      } finally {
+        setIsLoadingPrices(false);
+      }
+    }
+
+    fetchLivePrices();
+    fetchAllWeights();
+  }, []); 
 
   // --- NEW handler functions for the modal ---
   const handleViewDetails = (data) => {
@@ -114,39 +147,72 @@ export default function SyntheticPortfolios() {
   };
 
   return (
-    <div className="portfolio-main">
-      <h2 className="dashboard-widget h2">Your Synthetic Portfolios</h2>
-      <p className="portfolio-main-desc">
-        AI-driven asset baskets designed to mimic silver price movements.
-      </p>
+    <div className={`panel-container ${isCollapsed ? 'collapsed' : ''}`}>
+      <button className="collapse-btn left" onClick={onToggle}>
+        {isCollapsed ? '→' : '←'}
+      </button>
+      
+    <div className="portfolios">
+          <h2 className="portfolios-title">Your Synthetic Portfolios</h2>
+          <p className="portfolios-desc">
+            AI-driven asset baskets designed to mimic silver price movements.
+          </p>
 
       {/* --- Dynamic Card --- */}
-      {isLoading ? (
+      {/* {isLoading ? (
         <div>Loading portfolio...</div>
       ) : (
         <PortfolioCard 
-          title="Silver Tracker 1 (QP Model)" 
-          description="Static basket from Constrained QP model."
+          title="Static Portfolio (Baseline)" // <-- UPDATED
+          description="Baseline weights from commodity basket analysis." // <-- UPDATED
           weights={staticWeights}
-          // Pass the handler to the button
           onViewDetails={() => handleViewDetails({
-            title: "Silver Tracker 1 (QP Model)",
-            description: "This portfolio uses a static basket of assets calculated by a Quadratic Programming (QP) optimization model. The weights are fixed and optimized based on historical training data to minimize tracking error.",
+            title: "Static Portfolio (Baseline)",
+            description: "These are static weights derived from the 'commodity_basket_weights.csv' file, representing a baseline portfolio.", // <-- UPDATED
             weights: staticWeights
           })}
         />
+      )} */}
+
+
+      {/* --- Dynamic NN Card --- */}
+      {isLoadingDynamic ? (
+        <div>Loading NN portfolio...</div>
+      ) : (
+        <PortfolioCard 
+          title="Dynamic Portfolio (NN Model)" // <-- UPDATED
+          description="Live weights from predictive NN." // <-- UPDATED
+          weights={dynamicWeights} // <-- USE NEW STATE
+          onViewDetails={() => handleViewDetails({
+            title: "Dynamic Portfolio (NN Model)",
+            description: "These are the latest weights predicted *live* by the Neural Network, based on 8 parametric features from future price data. Weights are capped at 30% per asset.", // <-- UPDATED
+            weights: dynamicWeights
+          })}
+        />
       )}
-
-      {/* --- Static Card (for comparison) --- */}
-      <PortfolioCard 
-        title="Silver Mimic AI (Kalman)" 
-        description="Dynamic weights optimized for 92% correlation."
-        // Pass the handler to this button too
-        onViewDetails={() => handleViewDetails(kalmanDetails)}
-      />
-
+      {/* --- *** NEW LIVE PRICES CARD *** --- */}
+          <div className="portfolio-card">
+            <h3 className="dashboard-widget h3">Live Commodity Prices</h3>
+            {isLoadingPrices ? (
+              <div>Loading prices...</div>
+            ) : (
+              <ul className="live-price-list">
+                {livePrices.map((item) => (
+                  <li className="live-price-item" key={item.symbol}>
+                    <span className="live-asset-name">{item.name}</span>
+                    <span className="live-asset-price">
+                      ${item.price.toFixed(2)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {/* --- *** END OF NEW CARD *** --- */}
+          
       {/* --- NEW: Render the modal if modalData is not null --- */}
       <Modal data={modalData} onClose={handleCloseModal} />
+    </div>
     </div>
   );
 }

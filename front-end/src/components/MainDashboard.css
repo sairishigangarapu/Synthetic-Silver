@@ -17,9 +17,87 @@
   font-weight: 600;
   color: #f0f6fc;
   margin-top: 0;
+}
+
+.widget-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* Add the border here instead */
   padding-bottom: 1rem;
   border-bottom: 1px solid #30363d;
+  margin-bottom: 1rem; /* Add space between header and chart */
 }
+
+/* --- Styles for New Chart Title Dropdown --- */
+/* (Uses original pre-palette colors) */
+
+.chart-title-dropdown {
+  /* --- Style it to look like the old H2 --- */
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f0f6fc; /* Original title color */
+  font-family: inherit; /* Use Poppins font */
+
+  /* --- Remove default <select> styling --- */
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+
+  margin-bottom: 1rem; /* Add space between header and chart */
+  cursor: pointer;
+}
+
+/* Add a subtle hover effect */
+.chart-title-dropdown:hover {
+  color: #58a6ff; /* Original logo/link color */
+}
+
+.chart-title-dropdown:focus {
+  outline: none; /* Remove focus ring */
+}
+
+/* Style the <option> elements */
+.chart-title-dropdown option {
+  font-weight: 500;
+  background-color: #161b22; /* Original card background */
+  color: #f0f6fc;          /* Original title text */
+}
+
+.timeframe-selector {
+  display: flex;
+  align-items: center;
+  background-color: #0d1117; /* Darkest background from theme */
+  border-radius: 6px;
+  border: 1px solid #30363d; /* Standard border color */
+  padding: 0.2rem; /* Small padding to inset the buttons */
+}
+
+.timeframe-btn {
+  background: none;
+  border: none;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #8b949e; /* Dim text color from theme */
+  cursor: pointer;
+  border-radius: 6px; /* Match the container's rounding */
+  transition: all 0.2s ease;
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.timeframe-btn:hover {
+  color: #f0f6fc; /* Bright text color on hover */
+  background-color: #21262d; /* Subtle hover background */
+}
+
+.timeframe-btn.active {
+  background-color: #3b82f6; /* Primary button color from LoginPage.css */
+  color: white;
+  font-weight: 600;
+}
+
 
 /* Market Overview List */
 .market-list {
