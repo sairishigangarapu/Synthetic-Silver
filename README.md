@@ -15,12 +15,12 @@
 graph TD
     User[Researcher / User] -->|Interacts| UI[React Frontend]
     
-    subgraph "Simulation Layer (Fast Iteration)"
-        UI -.->|Request (No GPU)| Mock[Mock Backend]
-        Mock -.->|Synthetic Response| UI
+    subgraph "Simulation Layer - Fast Iteration"
+        UI -. "Request No GPU" .-> Mock[Mock Backend]
+        Mock -. "Synthetic Response" .-> UI
     end
     
-    subgraph "Core Research Engine (Working)"
+    subgraph "Core Research Engine - Working"
         UI -->|Production Request| Pipeline[Python/Jupyter Pipeline]
         Pipeline -->|Execute| Model[PAML Model Logic]
         Model -->|Results| Output[Data Visualization]
@@ -33,6 +33,7 @@ graph TD
     style UI fill:#61dafb,stroke:#333,stroke-width:2px
     style Model fill:#f9f,stroke:#333,stroke-width:2px
     style Mock fill:#ff9,stroke:#333,stroke-dasharray: 5 5
+
 ## 📂 Repository Structure
 This project follows a research-first directory structure, separating stable implementations from experimental proofs-of-concept.
 
