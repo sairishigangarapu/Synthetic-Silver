@@ -1,12 +1,12 @@
 
-# PAML: SyntheticSilver - LSTM based Data Prediction Tool
+# PAML: SyntheticSilver - LSTM-based Data Prediction Tool
 
 > **A research-driven framework for [Insert One-Liner, e.g., generating and validating synthetic datasets].**
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Jupyter](https://img.shields.io/badge/Notebooks-Research-orange) ![Status](https://img.shields.io/badge/Status-Research%20Prototype-yellow)
 
 ## 🔍 Overview
-**PAML** is a comprehensive toolkit designed to explore [Insert Goal, e.g., synthetic data generation techniques]. This repository serves as both a production codebase and a research log, documenting the iterative process of building [Specific Model/System].
+**PAML** is a comprehensive toolkit designed to explore Synthetic Data Generation, Prediction and display data of our basket-amalgamation model. This repository serves as both a production codebase and a research log, documenting the iterative process of building LSTM neural networks.
 
 ---
 ## 📐 System Architecture
