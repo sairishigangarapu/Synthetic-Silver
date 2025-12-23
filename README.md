@@ -8,11 +8,31 @@
 ## 🔍 Overview
 **PAML** is a comprehensive toolkit designed to explore [Insert Goal, e.g., synthetic data generation techniques]. This repository serves as both a production codebase and a research log, documenting the iterative process of building [Specific Model/System].
 
-The system focuses on:
-* **[Key Concept 1]:** [e.g., Data Privacy preservation]
-* **[Key Concept 2]:** [e.g., Algorithmic efficiency]
-* **[Key Concept 3]:** [e.g., Frontend-Backend integration simulation]
+---
+## 📐 System Architecture
 
+```mermaid
+graph TD
+    User[Researcher / User] -->|Interacts| UI[React Frontend]
+    
+    subgraph "Simulation Layer (Fast Iteration)"
+        UI -.->|Request (No GPU)| Mock[Mock Backend]
+        Mock -.->|Synthetic Response| UI
+    end
+    
+    subgraph "Core Research Engine (Working)"
+        UI -->|Production Request| Pipeline[Python/Jupyter Pipeline]
+        Pipeline -->|Execute| Model[PAML Model Logic]
+        Model -->|Results| Output[Data Visualization]
+    end
+    
+    subgraph "Research Archive"
+        Fail[Not_working / Legacy] -.->|Informs Architecture| Model
+    end
+
+    style UI fill:#61dafb,stroke:#333,stroke-width:2px
+    style Model fill:#f9f,stroke:#333,stroke-width:2px
+    style Mock fill:#ff9,stroke:#333,stroke-dasharray: 5 5
 ## 📂 Repository Structure
 This project follows a research-first directory structure, separating stable implementations from experimental proofs-of-concept.
 
