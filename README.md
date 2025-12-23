@@ -1,5 +1,5 @@
 
-# PAML: [Insert Full Project Name, e.g., Privacy-Aware Machine Learning Engine]
+# PAML: SyntheticSilver - LSTM based Data Prediction Tool
 
 > **A research-driven framework for [Insert One-Liner, e.g., generating and validating synthetic datasets].**
 
